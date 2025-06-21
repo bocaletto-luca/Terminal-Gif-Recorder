@@ -11,7 +11,7 @@ Terminal GIF Recorder is a fully responsive web application that simulates a ter
 - **Responsive Design:** Fully optimized for both desktop and mobile views.
 - **Downloadable Output:** Save your terminal session as a GIF with just one click.
 
-## Demo
+## Live Demo
 
 Check out the live demo on GitHub Pages:  
 [https://bocaletto-luca.github.io/terminal-gif-recorder](https://bocaletto-luca.github.io/terminal-gif-recorder)  
