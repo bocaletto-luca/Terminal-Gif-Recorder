@@ -4,96 +4,236 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Terminal GIF Recorder</title>
-  <!-- Includi lo stile di xterm.js -->
+  <!-- xterm.js CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
   <style>
-    body { 
-      background-color: #1e1e1e; 
-      color: #fff; 
-      font-family: monospace; 
-      text-align: center;
+    /* Resetting default margins */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Courier New', monospace;
+      background-color: #1e1e1e;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 20px;
     }
-    #terminal {
-      width: 600px;
-      height: 300px;
-      margin: 20px auto;
-      border: 1px solid #444;
-      border-radius: 5px;
-      overflow: hidden;
+    
+    h1 {
+      margin-bottom: 20px;
+      text-align: center;
     }
-    button {
-      margin: 10px;
+    
+    .container {
+      width: 100%;
+      max-width: 800px;
+      padding: 10px;
+    }
+    
+    /* User input form styles */
+    #userInput {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    
+    #userInput p {
+      margin-bottom: 10px;
+      font-size: 1.2em;
+    }
+    
+    #userInput div {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    #userInput input {
+      flex: 1;
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background-color: #333;
+      color: #fff;
+    }
+    
+    #userInput button {
       padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
+      font-size: 1em;
       border: none;
       border-radius: 4px;
+      background-color: #007acc;
+      color: #fff;
+      cursor: pointer;
     }
+    
+    /* Terminal container styles */
+    #terminalContainer {
+      display: none;
+      border: 1px solid #444;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 0 5px rgba(0,0,0,0.5);
+      margin-bottom: 20px;
+    }
+    
+    #terminal {
+      width: 100%;
+      height: 300px;
+    }
+    
+    /* Controls for recording */
+    #controls {
+      display: none;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    #controls button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 4px;
+      background-color: #007acc;
+      color: #fff;
+      cursor: pointer;
+    }
+    
+    /* GIF preview */
     #gifPreview {
-      margin-top: 20px;
+      text-align: center;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      #userInput div {
+        flex-direction: column;
+      }
+      
+      #userInput input, 
+      #userInput button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Terminal GIF Recorder</h1>
-  <div id="terminal"></div>
-  <div>
-    <button id="startRecord">Start Recording</button>
-    <button id="stopRecord" disabled>Stop Recording</button>
+  <div class="container">
+    <h1>Terminal GIF Recorder</h1>
+    <!-- User input: Username entry -->
+    <div id="userInput">
+      <p>Inserisci il tuo username GitHub per iniziare:</p>
+      <div>
+        <input type="text" id="githubUser" placeholder="es. bocaletto-luca" />
+        <button id="startSession">Avvia Terminale</button>
+      </div>
+    </div>
+    
+    <!-- Terminal emulator container -->
+    <div id="terminalContainer">
+      <div id="terminal"></div>
+    </div>
+    
+    <!-- Recording control buttons -->
+    <div id="controls">
+      <button id="startRecord">Start Recording</button>
+      <button id="stopRecord" disabled>Stop Recording</button>
+    </div>
+    
+    <!-- GIF preview output -->
+    <div id="gifPreview"></div>
   </div>
-  <div id="gifPreview"></div>
-
-  <!-- Includi le librerie: xterm.js, html2canvas e gifshot -->
+  
+  <!-- Include libraries: xterm.js, html2canvas, gifshot -->
   <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
-
+  
   <script>
-    // Inizializza l'emulatore di terminale
+    // Crea l'istanza di xterm.js
     const term = new Terminal({
+      cursorBlink: true,
       cols: 80,
       rows: 20,
       theme: { background: "#1e1e1e", foreground: "#fff" }
     });
-    term.open(document.getElementById('terminal'));
     
-    // Simula l'output del terminale (personalizza la logica in base alle tue esigenze)
-    term.write("Benvenuto nell'emulatore di terminale\r\n");
-    term.write("$ ");
-    setTimeout(() => {
-      term.write("git status\r\n");
-      term.write("On branch main\r\n");
-      term.write("Your branch is up to date with 'origin/main'.\r\n");
-      term.write("nothing to commit, working tree clean\r\n");
-      term.write("$ ");
-    }, 2000);
+    // Funzione di utilità per creare un ritardo
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     
-    // Variabili per la registrazione dei frame del terminale
+    // Variabili per la registrazione della GIF
     let frames = [];
     let captureInterval;
+    
+    // Elemento che ospita il terminale
     const terminalElement = document.getElementById('terminal');
     
-    // Avvia la registrazione: cattura uno screenshot dell'elemento ogni 500ms
-    document.getElementById('startRecord').addEventListener('click', function(){
+    // Evento per avviare la sessione terminale dopo input dell'username
+    document.getElementById('startSession').addEventListener('click', async () => {
+      const username = document.getElementById('githubUser').value.trim();
+      if (!username) {
+        alert("Per favore, inserisci un username GitHub.");
+        return;
+      }
+      
+      // Nascondi il form di input e mostra il terminale e i controlli
+      document.getElementById('userInput').style.display = 'none';
+      document.getElementById('terminalContainer').style.display = 'block';
+      document.getElementById('controls').style.display = 'block';
+      
+      term.open(terminalElement);
+      term.clear();
+      
+      // Simulazione della sessione terminale
+      term.write(`$ echo "Benvenuto, ${username}"\r\n`);
+      await delay(700);
+      term.write(`Benvenuto, ${username}\r\n\r\n`);
+      
+      term.write(`$ curl https://api.github.com/users/${username}\r\n`);
+      await delay(900);
+      term.write(`{\r\n`);
+      term.write(`  "login": "${username}",\r\n`);
+      term.write(`  "id": 123456,\r\n`);
+      term.write(`  "public_repos": 42,\r\n`);
+      term.write(`  "followers": 100,\r\n`);
+      term.write(`  "following": 8\r\n`);
+      term.write(`}\r\n\r\n`);
+      
+      term.write(`$ echo "GitHub streak recording started..."\r\n`);
+      await delay(600);
+      term.write("GitHub streak recording started...\r\n");
+      term.write("$ ");
+    });
+    
+    // Evento per iniziare la registrazione della GIF
+    document.getElementById('startRecord').addEventListener('click', function() {
       frames = [];
       this.disabled = true;
       document.getElementById('stopRecord').disabled = false;
+      
+      // Cattura screenshot dell'elemento del terminale ogni 500ms
       captureInterval = setInterval(() => {
         html2canvas(terminalElement).then(canvas => {
           frames.push(canvas.toDataURL());
-        });
+        }).catch(err => console.error(err));
       }, 500);
     });
     
-    // Ferma la registrazione e genera la GIF animata con gifshot
-    document.getElementById('stopRecord').addEventListener('click', function(){
+    // Evento per fermare la registrazione e generare la GIF
+    document.getElementById('stopRecord').addEventListener('click', function() {
       clearInterval(captureInterval);
       this.disabled = true;
       document.getElementById('startRecord').disabled = false;
+      
       gifshot.createGIF({
         images: frames,
-        interval: 0.5, // tempo in secondi tra i frame
+        interval: 0.5, // intervallo in secondi fra i frame
         gifWidth: terminalElement.clientWidth,
         gifHeight: terminalElement.clientHeight,
         numFrames: frames.length,
