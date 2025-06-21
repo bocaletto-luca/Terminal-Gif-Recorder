@@ -14,61 +14,68 @@
       text-align: center;
       padding: 20px;
     }
-    #terminal-container {
-      margin: 0 auto;
+    #terminal {
       width: 600px;
       height: 300px;
-      border: 1px solid #333;
+      margin: 20px auto;
+      border: 1px solid #444;
       border-radius: 5px;
       overflow: hidden;
     }
     button {
-      padding: 10px 20px;
       margin: 10px;
+      padding: 10px 20px;
       font-size: 16px;
-      border: none;
-      border-radius: 5px;
       cursor: pointer;
+      border: none;
+      border-radius: 4px;
     }
-    #controls { margin-top: 20px; }
-    #gifPreview { margin-top: 20px; }
+    #gifPreview {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
   <h1>Terminal GIF Recorder</h1>
-  <div id="terminal-container"></div>
-  <div id="controls">
+  <div id="terminal"></div>
+  <div>
     <button id="startRecord">Start Recording</button>
     <button id="stopRecord" disabled>Stop Recording</button>
   </div>
   <div id="gifPreview"></div>
 
-  <!-- Includi xterm.js -->
+  <!-- Includi le librerie: xterm.js, html2canvas e gifshot -->
   <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
-  <!-- Includi html2canvas per catturare lo screenshot dell'elemento -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <!-- Includi gifshot per creare la GIF dall'array di immagini -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
 
   <script>
     // Inizializza l'emulatore di terminale
-    const term = new Terminal({cols: 80, rows: 20});
-    term.open(document.getElementById('terminal-container'));
-
-    // Simula alcuni comandi/uscite nel terminale (puoi sostituire con la tua logica)
-    term.write("Welcome to your Terminal Emulator\r\n$ ");
-    setTimeout(() => { 
+    const term = new Terminal({
+      cols: 80,
+      rows: 20,
+      theme: { background: "#1e1e1e", foreground: "#fff" }
+    });
+    term.open(document.getElementById('terminal'));
+    
+    // Simula l'output del terminale (personalizza la logica in base alle tue esigenze)
+    term.write("Benvenuto nell'emulatore di terminale\r\n");
+    term.write("$ ");
+    setTimeout(() => {
       term.write("git status\r\n");
-      term.write("On branch main\r\nnothing to commit, working tree clean\r\n$ "); 
+      term.write("On branch main\r\n");
+      term.write("Your branch is up to date with 'origin/main'.\r\n");
+      term.write("nothing to commit, working tree clean\r\n");
+      term.write("$ ");
     }, 2000);
-
-    // Variabili per la registrazione
+    
+    // Variabili per la registrazione dei frame del terminale
     let frames = [];
     let captureInterval;
-    const terminalElement = document.getElementById('terminal-container');
-
-    // Inizia la registrazione: catturiamo uno screenshot ogni 500ms
-    document.getElementById('startRecord').addEventListener('click', function() {
+    const terminalElement = document.getElementById('terminal');
+    
+    // Avvia la registrazione: cattura uno screenshot dell'elemento ogni 500ms
+    document.getElementById('startRecord').addEventListener('click', function(){
       frames = [];
       this.disabled = true;
       document.getElementById('stopRecord').disabled = false;
@@ -78,26 +85,24 @@
         });
       }, 500);
     });
-
-    // Ferma la registrazione e genera la GIF dalla sequenza di immagini catturate
-    document.getElementById('stopRecord').addEventListener('click', function() {
+    
+    // Ferma la registrazione e genera la GIF animata con gifshot
+    document.getElementById('stopRecord').addEventListener('click', function(){
       clearInterval(captureInterval);
       this.disabled = true;
       document.getElementById('startRecord').disabled = false;
-      // Usa gifshot per creare la GIF
       gifshot.createGIF({
         images: frames,
-        interval: 0.5, // intervallo in secondi tra i frame
-        gifWidth: terminalElement.offsetWidth,
-        gifHeight: terminalElement.offsetHeight,
+        interval: 0.5, // tempo in secondi tra i frame
+        gifWidth: terminalElement.clientWidth,
+        gifHeight: terminalElement.clientHeight,
         numFrames: frames.length,
       }, function(obj) {
         if (!obj.error) {
           const image = obj.image;
-          // Mostra la GIF generata
-          document.getElementById('gifPreview').innerHTML = `<h3>GIF Registrata:</h3><img src="${image}" alt="Terminal GIF">`;
+          document.getElementById('gifPreview').innerHTML = `<h3>GIF Generata:</h3><img src="${image}" alt="Terminal GIF">`;
         } else {
-          console.error("Errore nella generazione della GIF:", obj.error);
+          alert("Errore nella generazione della GIF");
         }
       });
     });
