@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Terminal GIF Recorder</title>
+  <!-- Includi lo stile di xterm.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
+  <style>
+    body { 
+      background-color: #1e1e1e; 
+      color: #fff; 
+      font-family: monospace; 
+      text-align: center;
+      padding: 20px;
+    }
+    #terminal-container {
+      margin: 0 auto;
+      width: 600px;
+      height: 300px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #controls { margin-top: 20px; }
+    #gifPreview { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Terminal GIF Recorder</h1>
+  <div id="terminal-container"></div>
+  <div id="controls">
+    <button id="startRecord">Start Recording</button>
+    <button id="stopRecord" disabled>Stop Recording</button>
+  </div>
+  <div id="gifPreview"></div>
+
+  <!-- Includi xterm.js -->
+  <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
+  <!-- Includi html2canvas per catturare lo screenshot dell'elemento -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Includi gifshot per creare la GIF dall'array di immagini -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
+
+  <script>
+    // Inizializza l'emulatore di terminale
+    const term = new Terminal({cols: 80, rows: 20});
+    term.open(document.getElementById('terminal-container'));
+
+    // Simula alcuni comandi/uscite nel terminale (puoi sostituire con la tua logica)
+    term.write("Welcome to your Terminal Emulator\r\n$ ");
+    setTimeout(() => { 
+      term.write("git status\r\n");
+      term.write("On branch main\r\nnothing to commit, working tree clean\r\n$ "); 
+    }, 2000);
+
+    // Variabili per la registrazione
+    let frames = [];
+    let captureInterval;
+    const terminalElement = document.getElementById('terminal-container');
+
+    // Inizia la registrazione: catturiamo uno screenshot ogni 500ms
+    document.getElementById('startRecord').addEventListener('click', function() {
+      frames = [];
+      this.disabled = true;
+      document.getElementById('stopRecord').disabled = false;
+      captureInterval = setInterval(() => {
+        html2canvas(terminalElement).then(canvas => {
+          frames.push(canvas.toDataURL());
+        });
+      }, 500);
+    });
+
+    // Ferma la registrazione e genera la GIF dalla sequenza di immagini catturate
+    document.getElementById('stopRecord').addEventListener('click', function() {
+      clearInterval(captureInterval);
+      this.disabled = true;
+      document.getElementById('startRecord').disabled = false;
+      // Usa gifshot per creare la GIF
+      gifshot.createGIF({
+        images: frames,
+        interval: 0.5, // intervallo in secondi tra i frame
+        gifWidth: terminalElement.offsetWidth,
+        gifHeight: terminalElement.offsetHeight,
+        numFrames: frames.length,
+      }, function(obj) {
+        if (!obj.error) {
+          const image = obj.image;
+          // Mostra la GIF generata
+          document.getElementById('gifPreview').innerHTML = `<h3>GIF Registrata:</h3><img src="${image}" alt="Terminal GIF">`;
+        } else {
+          console.error("Errore nella generazione della GIF:", obj.error);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
