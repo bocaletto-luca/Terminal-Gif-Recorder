@@ -3,6 +3,8 @@
 
 Terminal GIF Recorder is a fully responsive web application that simulates a terminal session to fetch live GitHub data for any entered username. The app automatically records the entire terminal session—starting from its launch until the simulated commands conclude—and generates an animated, looping GIF of the session. No backend is required; everything runs directly in your browser.
 
+[![Test Online](https://img.shields.io/badge/Test%20Online-Click%20Here-blue?style=for-the-badge)](https://bocaletto-luca.github.io/terminal-gif-recorder/)
+
 ## Features
 
 - **Live GitHub Data:** Automatically retrieves your GitHub profile data via the GitHub API.
