@@ -62,4 +62,4 @@ Check out the live demo on GitHub Pages:
 Contributions are welcome! Please feel free to fork the repository, create a feature branch, and submit a pull request for any improvements or bug fixes.
 License
 
-This project is licensed under the GPL.
+This project is licensed under the GPL v3.
